@@ -3,84 +3,94 @@ import matplotlib.pyplot as plt
 import yfinance as yf
 import seaborn as sns
 import numpy as np
+prezzi= pd.read_csv('https://dgsaie.mise.gov.it/open_data_export.php?export-id=2&export-type=csv', sep=',',on_bad_lines='warn', header=0)
+prezzi['Date']=pd.to_datetime(prezzi['DATA_RILEVAZIONE'])
+prezzi.index=pd.to_datetime(prezzi['Date'])
+del prezzi['GASOLIO_AUTO']
+del prezzi['GPL']
+del prezzi['GASOLIO_RISCALDAMENTO']
+del prezzi['O.C._FLUIDO_BTZ']
+del prezzi['O.C._DENSO_BTZ']	
+#importiamo i vari dati da yfinance
 
-prezzi = pd.read_csv('https://dgsaie.mise.gov.it/open_data_export.php?export-id=2&export-type=csv', sep=',', on_bad_lines='warn', header=0)
-
-
-# Ticker per il Brent
-brent_ticker = yf.Ticker("BZ=F")
-
-# Ticker per il WTI
-wti_ticker = yf.Ticker("CL=F")
-
-# Ottieni i dati storici per il Brent
-brent_df = brent_ticker.history(period="max")
-
-# Ottieni i dati storici per il WTI
+wti_ticker = yf.Ticker("WTI")
 wti_df = wti_ticker.history(period="max")
-
-# Ticker per il cambio EUR/USD
-eurusd_ticker = yf.Ticker("EURUSD=X")
-
-# Ottieni i dati storici per il cambio EUR/USD
+brent_ticker = yf.Ticker("BZ=F")
+brent_df = brent_ticker.history(period="max")
+eurusd_ticker = yf.Ticker("EURUSD=x")
 eurusd_df = eurusd_ticker.history(period="max")
+#convertiamo gli indici in formato data=formato data mise
+
+eurusd_df.index=pd.to_datetime(eurusd_df.index).date
+brent_df.index=pd.to_datetime(brent_df.index).date
+wti_df.index=pd.to_datetime(wti_df.index).date
+
+#
+del eurusd_df['Open']
+del eurusd_df['High']
+del eurusd_df['Low']
+del eurusd_df['Volume']
+del eurusd_df['Dividends']
+del eurusd_df['Stock Splits']
+brent_eur= pd.merge(eurusd_df, brent_df, left_index=True, right_index=True)
+brent_eur_ben= pd.merge(brent_eur, prezzi, left_index=True, right_index=True)
+df_brent_eur_ben=brent_eur_ben[['Close_x', 'Close_y', 'BENZINA']]
+df=df_brent_eur_ben.rename(columns={'Close_x':'EurDol', 'Close_y':'brent'})
+
+df['brent_eur']=df['brent']/df['EurDol']
+df['ben1000']=df['BENZINA']/1000
+df['rap_BEN_brent']=df['ben1000']/(df['brent_eur']/158.99)
+
+finestra=5
+
+df['rap_BEN_brent_mean'] = df['rap_BEN_brent'].rolling(window=finestra).mean()
+df['rap_BEN_brent_std'] = df['rap_BEN_brent'].rolling(window=finestra).std()
+
+df['rap_BEN_brent_1']= df['rap_BEN_brent_mean'] + df['rap_BEN_brent_std'] 
+df['rap_BEN_brent_2']= df['rap_BEN_brent_mean'] - df['rap_BEN_brent_std'] 
+df['rap_BEN_brent_3']= df['rap_BEN_brent_mean'] + 2*df['rap_BEN_brent_std'] 
+df['rap_BEN_brent_4']= df['rap_BEN_brent_mean'] - 2*df['rap_BEN_brent_std'] 
+df['rap_BEN_brent_5']= df['rap_BEN_brent_mean'] + 3*df['rap_BEN_brent_std'] 
+df['rap_BEN_brent_6']= df['rap_BEN_brent_mean'] - 3*df['rap_BEN_brent_std'] 
 
 
-# Ottieni i dati storici per il cambio EUR/USD
-eurusd_df = eurusd_ticker.history(period="max")
+plt.figure(figsize=(16,10))
 
-eurusd_df.index = pd.to_datetime(eurusd_df.index).date
-
-
-wti_df.index = pd.to_datetime(wti_df.index).date
-prezzi["Date"] = pd.to_datetime(prezzi["DATA_RILEVAZIONE"])
-prezzi.index = pd.to_datetime(prezzi.index).date
-prezzi = prezzi.set_index('DATA_RILEVAZIONE')
-wti_eur = pd.merge(eurusd_df, wti_df, left_index=True, right_index=True)
-wti_eur.dropna()
-
-wti_eur.index = pd.to_datetime(wti_eur.index)
-wti_eur = wti_eur[wti_eur.index >= '2005-01-03']
-prezzi.index = pd.to_datetime(prezzi.index)
-wti_eur_ben = pd.merge(wti_eur, prezzi, left_index=True, right_index=True)
-def_wti_eur = wti_eur_ben[['Close_x', 'Close_y', 'BENZINA']]
-def_wti_eur = wti_eur_ben.loc[:, ['Close_x', 'Close_y', 'BENZINA']]
-df=def_wti_eur.rename(columns={'Close_x':'EurDol','Close_y': 'WTI'})
-df["wtieur"] = df["WTI"] / df["EurDol"]
-df["ben100"] = df["BENZINA"] / 1000
-
-
-df['ben7'] = df['ben100'].rolling(window=7).mean()
-df['wtieur7'] = df['WTI'].rolling(window=7).mean()
-
-df["rap_WTI_BEN"] = df["ben7"] / (df["wtieur7"] /158.98)
-
-# Calcola la media mobile a 7 giorni
-df['rap_WTI_BEN_mm'] = df['rap_WTI_BEN'].rolling(window=1).mean()
-
-# Calcola la deviazione standard a 7 giorni
-df['rap_WTI_BEN_std'] = df['rap_WTI_BEN'].rolling(window=1).std()
-settimane=15
-plt.figure(figsize=(32, 18))
-# Calcola la media mobile a x settimane e gli intervalli di sigma
-df['rap_WTI_BEN_mean'] = df['rap_WTI_BEN'].rolling(window=settimane).mean()
-df['rap_WTI_BEN_std'] = df['rap_WTI_BEN'].rolling(window=settimane).std()
-df['rap_WTI_BEN_std_upper_1'] = df['rap_WTI_BEN_mean'] + df['rap_WTI_BEN_std']
-df['rap_WTI_BEN_std_upper_2'] = df['rap_WTI_BEN_mean'] + 2 * df['rap_WTI_BEN_std']
-df['rap_WTI_BEN_std_upper_3'] = df['rap_WTI_BEN_mean'] + 3 * df['rap_WTI_BEN_std']
-df['rap_WTI_BEN_std_lower_1'] = df['rap_WTI_BEN_mean'] - df['rap_WTI_BEN_std']
-df['rap_WTI_BEN_std_lower_2'] = df['rap_WTI_BEN_mean'] - 2 * df['rap_WTI_BEN_std']
-df['rap_WTI_BEN_std_lower_3'] = df['rap_WTI_BEN_mean'] - 3 * df['rap_WTI_BEN_std']
-
-# Disegna il grafico dell'andamento storico della colonna rap_WTI_BEN
-plt.plot(df.index, df['rap_WTI_BEN'], label='Rapporto in € fra Benzina senza accise e WTI', linewidth=4, color='blue')
-plt.plot(df.index, df['rap_WTI_BEN_mean'], label=f'Media mobile a {settimane} settimane',  linewidth=4, linestyle='--', color='red')
-plt.fill_between(df.index, df['rap_WTI_BEN_std_upper_3'], df['rap_WTI_BEN_std_lower_3'], alpha=0.2, label='+3 Sigma')
-plt.fill_between(df.index, df['rap_WTI_BEN_std_upper_2'], df['rap_WTI_BEN_std_lower_2'], alpha=0.2, label='+2 Sigma')
-plt.fill_between(df.index, df['rap_WTI_BEN_std_upper_1'], df['rap_WTI_BEN_std_lower_1'], alpha=0.2, label='+1 Sigma')
+plt.plot(df.index, df['rap_BEN_brent'], color='blue', linewidth=4, label='Rapporto in € fra Benzina senza accise e brent')
+plt.plot(df.index, df['rap_BEN_brent_mean'], label=f'Media mobile a {finestra} settimane', linestyle='--', color='red', linewidth=4)
+plt.fill_between(df.index,df['rap_BEN_brent_1'], df['rap_BEN_brent_2'], alpha=0.2, label='+1 sigma')
+plt.fill_between(df.index,df['rap_BEN_brent_3'], df['rap_BEN_brent_4'], alpha=0.2, label='+2 sigma')
+plt.fill_between(df.index,df['rap_BEN_brent_5'], df['rap_BEN_brent_6'], alpha=0.2, label='+3 sigma')
 plt.legend()
-plt.rcParams.update({'font.size': 30})
-plt.ylim(0,3)
 plt.grid(visible=True, linewidth=0.5)
+plt.show()
+
+
+#Qui printo un altro grafico per avere anche una anlisi sul prezzo della benzina italiana
+# Calcola i rendimenti logaritmici
+df['log_returns'] = np.log(df['ben1000'] / df['ben1000'].shift(1))
+
+# Rimuovi la prima riga (NaN)
+df = df.dropna()
+
+# Calcola la media mobile e la deviazione standard mobile dei rendimenti logaritmici
+mean_log_returns_rolling = df['log_returns'].rolling(window=finestra).mean()
+std_log_returns_rolling = df['log_returns'].rolling(window=finestra).std()
+
+# Rappresenta i rendimenti logaritmici
+plt.figure(figsize=(12, 6))
+plt.plot(df.index, df['log_returns'], label='Rendimenti Logaritmici', color='blue', linewidth=1)
+plt.axhline(mean_log_returns, color='red', linestyle='dashed', label='Media')
+plt.axhline(mean_log_returns + std_log_returns, color='green', linestyle='dashed', label='Sigma 1')
+plt.axhline(mean_log_returns - std_log_returns, color='green', linestyle='dashed')
+plt.axhline(mean_log_returns + 2 * std_log_returns, color='orange', linestyle='dashed', label='Sigma 2')
+plt.axhline(mean_log_returns - 2 * std_log_returns, color='orange', linestyle='dashed')
+plt.axhline(mean_log_returns + 3 * std_log_returns, color='purple', linestyle='dashed', label='Sigma 3')
+plt.axhline(mean_log_returns - 3 * std_log_returns, color='purple', linestyle='dashed')
+plt.title('Rendimenti Logaritmici del prezzo nazionale settimanale benzina')
+plt.xlabel('Data')
+plt.ylabel('Rendimenti Logaritmici')
+plt.grid(True)
+plt.legend()
 plt.show()
 
