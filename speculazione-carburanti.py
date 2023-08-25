@@ -67,6 +67,7 @@ plt.show()
 
 
 #Qui printo un altro grafico per avere anche una anlisi sul prezzo della benzina italiana
+
 # Calcola i rendimenti logaritmici
 df['log_returns'] = np.log(df['ben1000'] / df['ben1000'].shift(1))
 
@@ -74,13 +75,13 @@ df['log_returns'] = np.log(df['ben1000'] / df['ben1000'].shift(1))
 df = df.dropna()
 
 # Calcola la media mobile e la deviazione standard mobile dei rendimenti logaritmici
-mean_log_returns_rolling = df['log_returns'].rolling(window=finestra).mean()
-std_log_returns_rolling = df['log_returns'].rolling(window=finestra).std()
+mean_log_returns = df['log_returns'].mean()
+std_log_returns = df['log_returns'].std()
 
 # Rappresenta i rendimenti logaritmici
 plt.figure(figsize=(12, 6))
 plt.plot(df.index, df['log_returns'], label='Rendimenti Logaritmici', color='blue', linewidth=1)
-plt.axhline(mean_log_returns, color='red', linestyle='dashed', label='Media')
+
 plt.axhline(mean_log_returns + std_log_returns, color='green', linestyle='dashed', label='Sigma 1')
 plt.axhline(mean_log_returns - std_log_returns, color='green', linestyle='dashed')
 plt.axhline(mean_log_returns + 2 * std_log_returns, color='orange', linestyle='dashed', label='Sigma 2')
