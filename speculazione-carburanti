@@ -60,11 +60,11 @@ df['rap_WTI_BEN_mm'] = df['rap_WTI_BEN'].rolling(window=1).mean()
 
 # Calcola la deviazione standard a 7 giorni
 df['rap_WTI_BEN_std'] = df['rap_WTI_BEN'].rolling(window=1).std()
-
+settimane=15
 plt.figure(figsize=(32, 18))
 # Calcola la media mobile a x settimane e gli intervalli di sigma
-df['rap_WTI_BEN_mean'] = df['rap_WTI_BEN'].rolling(window=15).mean()
-df['rap_WTI_BEN_std'] = df['rap_WTI_BEN'].rolling(window=15).std()
+df['rap_WTI_BEN_mean'] = df['rap_WTI_BEN'].rolling(window=settimane).mean()
+df['rap_WTI_BEN_std'] = df['rap_WTI_BEN'].rolling(window=settimane).std()
 df['rap_WTI_BEN_std_upper_1'] = df['rap_WTI_BEN_mean'] + df['rap_WTI_BEN_std']
 df['rap_WTI_BEN_std_upper_2'] = df['rap_WTI_BEN_mean'] + 2 * df['rap_WTI_BEN_std']
 df['rap_WTI_BEN_std_upper_3'] = df['rap_WTI_BEN_mean'] + 3 * df['rap_WTI_BEN_std']
@@ -74,7 +74,7 @@ df['rap_WTI_BEN_std_lower_3'] = df['rap_WTI_BEN_mean'] - 3 * df['rap_WTI_BEN_std
 
 # Disegna il grafico dell'andamento storico della colonna rap_WTI_BEN
 plt.plot(df.index, df['rap_WTI_BEN'], label='Rapporto in € fra Benzina senza accise e WTI', linewidth=4, color='blue')
-plt.plot(df.index, df['rap_WTI_BEN_mean'], label='Media mobile 6 settimane',  linewidth=4, color='red')
+plt.plot(df.index, df['rap_WTI_BEN_mean'], label=f'Media mobile a {settimane} settimane',  linewidth=4, color='red')
 plt.fill_between(df.index, df['rap_WTI_BEN_std_upper_3'], df['rap_WTI_BEN_std_lower_3'], alpha=0.2, label='+3 Sigma')
 plt.fill_between(df.index, df['rap_WTI_BEN_std_upper_2'], df['rap_WTI_BEN_std_lower_2'], alpha=0.2, label='+2 Sigma')
 plt.fill_between(df.index, df['rap_WTI_BEN_std_upper_1'], df['rap_WTI_BEN_std_lower_1'], alpha=0.2, label='+1 Sigma')
