@@ -95,3 +95,82 @@ plt.grid(True)
 plt.legend()
 plt.show()
 
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Calcola i rendimenti logaritmici
+df['log_returns'] = np.log(df['ben1000'] / df['ben1000'].shift(1))
+
+# Rimuovi la prima riga (NaN)
+df = df.dropna()
+
+# Calcola la media mobile e la deviazione standard mobile dei rendimenti logaritmici
+mean_log_returns_rolling = df['log_returns'].rolling(window=finestra).mean()
+std_log_returns_rolling = df['log_returns'].rolling(window=finestra).std()
+
+# Aggiungi le colonne corrette al DataFrame originale usando .loc
+df.loc[:, 'ben_1'] = mean_log_returns_rolling + std_log_returns_rolling
+df.loc[:, 'ben_2'] = mean_log_returns_rolling - std_log_returns_rolling
+df.loc[:, 'ben_3'] = mean_log_returns_rolling + 2 * std_log_returns_rolling
+df.loc[:, 'ben_4'] = mean_log_returns_rolling - 2 * std_log_returns_rolling
+df.loc[:, 'ben_5'] = mean_log_returns_rolling + 3 * std_log_returns_rolling
+df.loc[:, 'ben_6'] = mean_log_returns_rolling - 3 * std_log_returns_rolling
+
+# Rappresenta i rendimenti logaritmici
+plt.figure(figsize=(12, 6))
+plt.plot(df.index, df['log_returns'], label='Rendimenti Logaritmici', color='blue', linewidth=1)
+plt.plot(df.index, mean_log_returns_rolling, label=f'Media mobile a {finestra} settimane', linestyle='--', color='red', linewidth=1)
+plt.fill_between(df.index, df['ben_1'], df['ben_2'], alpha=0.2, label='+1 sigma')
+plt.fill_between(df.index, df['ben_3'], df['ben_4'], alpha=0.2, label='+2 sigma')
+plt.fill_between(df.index, df['ben_5'], df['ben_6'], alpha=0.2, label='+3 sigma')
+plt.title('Rendimenti Logaritmici del prezzo nazionale settimanale benzina')
+plt.xlabel('Data')
+plt.ylabel('Rendimenti Logaritmici')
+plt.grid(True)
+plt.legend()
+plt.show()
+
+
+
+import plotly.express as px
+import plotly.graph_objects as go
+
+finestra = 5
+
+df['rap_BEN_brent_mean'] = df['rap_BEN_brent'].rolling(window=finestra).mean()
+df['rap_BEN_brent_std'] = df['rap_BEN_brent'].rolling(window=finestra).std()
+
+df['rap_BEN_brent_1'] = df['rap_BEN_brent_mean'] + df['rap_BEN_brent_std']
+df['rap_BEN_brent_2'] = df['rap_BEN_brent_mean'] - df['rap_BEN_brent_std']
+df['rap_BEN_brent_3'] = df['rap_BEN_brent_mean'] + 2 * df['rap_BEN_brent_std']
+df['rap_BEN_brent_4'] = df['rap_BEN_brent_mean'] - 2 * df['rap_BEN_brent_std']
+df['rap_BEN_brent_5'] = df['rap_BEN_brent_mean'] + 3 * df['rap_BEN_brent_std']
+df['rap_BEN_brent_6'] = df['rap_BEN_brent_mean'] - 3 * df['rap_BEN_brent_std']
+
+fig = go.Figure()
+
+# Rappresenta il rapporto
+fig.add_trace(go.Scatter(x=df.index, y=df['rap_BEN_brent'], mode='lines', name='Rapporto in € fra Benzina senza accise e brent', line=dict(color='blue', width=4)))
+
+# Rappresenta la media mobile
+fig.add_trace(go.Scatter(x=df.index, y=df['rap_BEN_brent_mean'], mode='lines', name=f'Media mobile a {finestra} settimane', line=dict(color='red', width=4, dash='dash')))
+
+# Rappresenta le bande di deviazione standard
+fig.add_trace(go.Scatter(x=df.index, y=df['rap_BEN_brent_1'], fill=None, mode='lines', line=dict(color='green'), name='+1 sigma', fillcolor='rgba(0,100,80,0.2)'))
+fig.add_trace(go.Scatter(x=df.index, y=df['rap_BEN_brent_2'], fill='tonexty', mode='lines', line=dict(color='green'), name='-1 sigma', fillcolor='rgba(0,100,80,0.2)'))
+fig.add_trace(go.Scatter(x=df.index, y=df['rap_BEN_brent_3'], fill=None, mode='lines', line=dict(color='orange'), name='+2 sigma', fillcolor='rgba(100,100,80,0.2)'))
+fig.add_trace(go.Scatter(x=df.index, y=df['rap_BEN_brent_4'], fill='tonexty', mode='lines', line=dict(color='orange'), name='-2 sigma', fillcolor='rgba(100,100,80,0.2)'))
+fig.add_trace(go.Scatter(x=df.index, y=df['rap_BEN_brent_5'], fill=None, mode='lines', line=dict(color='purple'), name='+3 sigma', fillcolor='rgba(100,0,80,0.2)'))
+fig.add_trace(go.Scatter(x=df.index, y=df['rap_BEN_brent_6'], fill='tonexty', mode='lines', line=dict(color='purple'), name='-3 sigma', fillcolor='rgba(100,0,80,0.2)'))
+
+# Personalizza il layout
+fig.update_layout(title='Rapporto con Media Mobile e Deviazioni Standard',
+                  xaxis_title='Data',
+                  yaxis_title='Rapporto',
+                  showlegend=True)
+
+fig.show()
+
+
