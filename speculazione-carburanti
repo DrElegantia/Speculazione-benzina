@@ -74,13 +74,13 @@ df['rap_WTI_BEN_std_lower_3'] = df['rap_WTI_BEN_mean'] - 3 * df['rap_WTI_BEN_std
 
 # Disegna il grafico dell'andamento storico della colonna rap_WTI_BEN
 plt.plot(df.index, df['rap_WTI_BEN'], label='Rapporto in € fra Benzina senza accise e WTI', linewidth=4, color='blue')
-plt.plot(df.index, df['rap_WTI_BEN_mean'], label=f'Media mobile a {settimane} settimane',  linewidth=4, color='red')
+plt.plot(df.index, df['rap_WTI_BEN_mean'], label=f'Media mobile a {settimane} settimane',  linewidth=4, linestyle='--', color='red')
 plt.fill_between(df.index, df['rap_WTI_BEN_std_upper_3'], df['rap_WTI_BEN_std_lower_3'], alpha=0.2, label='+3 Sigma')
 plt.fill_between(df.index, df['rap_WTI_BEN_std_upper_2'], df['rap_WTI_BEN_std_lower_2'], alpha=0.2, label='+2 Sigma')
 plt.fill_between(df.index, df['rap_WTI_BEN_std_upper_1'], df['rap_WTI_BEN_std_lower_1'], alpha=0.2, label='+1 Sigma')
 plt.legend()
 plt.rcParams.update({'font.size': 30})
 plt.ylim(0,3)
-plt.grid(visible=True, color='gray', linestyle='--', linewidth=0.5)
+plt.grid(visible=True, linewidth=0.5)
 plt.show()
 
