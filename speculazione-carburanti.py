@@ -13,12 +13,18 @@ del prezzi['O.C._FLUIDO_BTZ']
 del prezzi['O.C._DENSO_BTZ']	
 #importiamo i vari dati da yfinance
 
+#importiamo i vari dati da yfinance
+
 wti_ticker = yf.Ticker("WTI")
 wti_df = wti_ticker.history(period="max")
+wti_df['Mediana_7_WTI'] = wti_df['Close'].rolling(window=7).median()
 brent_ticker = yf.Ticker("BZ=F")
 brent_df = brent_ticker.history(period="max")
+brent_df['Mediana_7_brent'] = brent_df['Close'].rolling(window=7).median()
 eurusd_ticker = yf.Ticker("EURUSD=x")
 eurusd_df = eurusd_ticker.history(period="max")
+eurusd_df['Mediana_7_eurdol'] = eurusd_df['Close'].rolling(window=7).median()
+
 #convertiamo gli indici in formato data=formato data mise
 
 eurusd_df.index=pd.to_datetime(eurusd_df.index).date
@@ -34,8 +40,8 @@ del eurusd_df['Dividends']
 del eurusd_df['Stock Splits']
 brent_eur= pd.merge(eurusd_df, brent_df, left_index=True, right_index=True)
 brent_eur_ben= pd.merge(brent_eur, prezzi, left_index=True, right_index=True)
-df_brent_eur_ben=brent_eur_ben[['Close_x', 'Close_y', 'BENZINA']]
-df=df_brent_eur_ben.rename(columns={'Close_x':'EurDol', 'Close_y':'brent'})
+df_brent_eur_ben=brent_eur_ben[['Mediana_7_eurdol', 'Mediana_7_brent', 'BENZINA']]
+df=df_brent_eur_ben.rename(columns={'Mediana_7_eurdol':'EurDol', 'Mediana_7_brent':'brent'})
 
 df['brent_eur']=df['brent']/df['EurDol']
 df['ben1000']=df['BENZINA']/1000
